@@ -1,0 +1,161 @@
+GUESS THE NUMBER - LEARN A WINDOWS GUI IN C
+
+This project keeps your game in C and uses the Windows API (Win32) to
+create a desktop window. It is for Windows, with a MinGW-w64 GCC compiler,
+such as the MSYS2 UCRT64 GCC shown in your earlier terminal output.
+You do not need GTK, Python, a web server, or another GUI library.
+
+FILES
+  WindowOnly.c : Your first step: a small, empty Windows window.
+  GuessGUI.c   : The full number-guessing game, with explanatory comments.
+  START_HERE.txt : This guide.
+
+1. WHERE TO WRITE AND RUN IT
+Extract this ZIP. Put the GuessGUI folder inside your Learning C folder.
+In VS Code, choose File > Open Folder and open that GuessGUI folder.
+Choose Terminal > New Terminal. Use PowerShell.
+The terminal's current folder should contain GuessGUI.c and WindowOnly.c.
+Use dir in PowerShell to check that you can see both filenames.
+
+First build and run the EMPTY WINDOW, one command at a time:
+
+  gcc WindowOnly.c -o WindowOnly.exe -std=c11 -Wall -Wextra -mwindows
+  .\WindowOnly.exe
+
+Close that window. Then build and run the FULL GAME:
+
+  gcc GuessGUI.c -o GuessGUI.exe -std=c11 -Wall -Wextra -mwindows -lgdi32
+  .\GuessGUI.exe
+
+After a change: save the .c file, close the old game, compile, then run.
+These are two separate programs: compile each file separately.
+Do not use gcc *.c because both programs have their own WinMain.
+
+The compiler command means:
+  gcc          : compile C source code
+  GuessGUI.c   : the source file
+  -o GuessGUI.exe : name the executable
+  -std=c11     : use the C11 language standard
+  -Wall -Wextra : show useful compiler warnings
+  -mwindows    : build a Windows GUI executable
+  -lgdi32      : link the Windows graphics functions used for fonts/colors
+
+Use these terminal commands for this project; your previous Code Runner
+command for a console program may omit the GUI and graphics flags.
+
+2. UNDERSTAND THE CHANGE FROM CONSOLE TO GUI
+
+Console version                GUI version
+---------------------------------------------------------------
+printf("Guess...")             A label displays the instruction
+scanf("%d", &guess)            An EDIT control accepts text
+Read the player's input        GetWindowTextA reads that text
+printf("Higher...")            SetWindowTextA changes a label
+do-while asks again             A button click calls checkGuess again
+main                           WinMain in this Windows application
+
+The if/else comparisons, random secret, and guess counter still use C.
+
+The main new idea is EVENTS.
+In the console, scanf waits for typed input.
+In a GUI, Windows tells your application when the user clicks or types.
+Your program responds to that event, then waits for the next one.
+The message loop keeps the window responsive while it waits.
+
+Do not put the old scanf/do-while guessing loop inside the button handler.
+Each button click should process only ONE guess.
+
+3. READ WindowOnly.c FIRST
+
+#include <windows.h>
+  Gives the declarations for Windows functions and types.
+
+WinMain(...)
+  Starts this GUI application, registers a window class, creates the
+  window, shows it, and starts processing messages.
+
+WNDCLASSA windowClass = {0};
+  Describes the kind of window we want. {0} initializes its fields.
+
+WindowProc(...)
+  Our event-handling function. Windows calls it for window messages.
+  You will see unfamiliar types here; learn their purpose gradually.
+
+CreateWindowExA(...)
+  Creates a window. The full game also uses it for labels and controls.
+
+HWND
+  A handle that identifies a particular window or control.
+
+GetMessageA / TranslateMessage / DispatchMessageA
+  Retrieve and process events so the window responds to the user.
+
+WM_DESTROY / PostQuitMessage
+  Let the message loop finish after the main window is destroyed.
+
+4. THEN READ GuessGUI.c IN THIS ORDER
+
+A. The variables near the top
+   randomNumber, no_of_guesses, and gameWon remember game state.
+   Unlike local variables in checkGuess, they survive between clicks.
+
+B. startNewGame
+   Picks the secret once. Resets the counter and interface.
+   Try changing the random assignment to randomNumber = 42 while learning.
+
+C. checkGuess
+   Reads the input box, validates it, adds one to the count, compares the
+   number, and displays a hint. This is the part closest to your code.
+   strtol converts text to a number and lets us detect invalid input.
+
+D. WM_CREATE inside WindowProc
+   Creates the title, instructions, input box, buttons, and labels.
+   STATIC means a text label; EDIT means a text input box;
+   BUTTON means a clickable button. These are built-in control classes.
+
+E. WM_COMMAND inside WindowProc
+   A button click arrives here. The button's numeric ID tells us
+   whether to call checkGuess or startNewGame.
+
+F. WinMain and the message loop
+   Prepare the program, seed the random generator once, create the
+   window, then keep processing events until it closes.
+
+G. Fonts, colors, and pixels
+   These control appearance and Windows display scaling. Leave them
+   until you understand the game logic and click handling.
+
+5. LEARNING EXERCISES
+  1. Run WindowOnly.c, then change its title and dimensions.
+  2. Run GuessGUI.c with the secret fixed at 42.
+  3. Enter 20, 80, then 42. Observe the two hints and total of 3 guesses.
+  4. Try empty input, 0, and 101. They should not increase the counter.
+  5. Click New game. The counter should return to zero.
+  6. Restore random number generation.
+  7. Change the title and hint messages yourself.
+  8. Optional later exercise: add a limit of 10 guesses. Decide what
+     happens on the tenth wrong answer and on the tenth correct answer.
+
+KEYBOARD
+  Enter submits a guess. After winning, Enter starts a new game.
+  When New game has keyboard focus, Enter starts a new game.
+  Tab moves between controls. Space activates a focused button.
+
+COMMON BUILD PROBLEMS
+  "gcc is not recognized": reopen VS Code after setting up GCC/PATH.
+  "No such file or directory": check the terminal folder and .c extension.
+  "windows.h: No such file": use Windows MinGW-w64 GCC, not WSL's Linux GCC.
+  "Permission denied" for GuessGUI.exe: close the running game and rebuild.
+  Undefined GDI references: include -lgdi32 at the END of the build command.
+  Error involving main/WinMain: use the exact compile command above and
+  compile only the intended source file.
+
+REFERENCE
+Microsoft's introductory explanation of a Windows window and message loop:
+https://learn.microsoft.com/en-us/windows/win32/learnwin32/your-first-windows-program
+That tutorial uses C++; this project uses C and ANSI Win32 function names.
+
+VERIFICATION NOTE
+This package was prepared on Linux. A Windows compiler/runtime was not
+available here, so the Windows build and visual behavior need to be
+checked on your Windows computer using the commands above.
